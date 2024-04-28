@@ -1,0 +1,72 @@
+%import common.ESCAPED_STRING
+%import common.LCASE_LETTER
+%import common.UCASE_LETTER
+%import common.WS
+
+%ignore WS
+%ignore COMMENT
+
+COMMENT : /%[^\n]*/
+UNDERSCORE: "_"
+COLON: ":"
+DIGIT: "0".."9"
+NUMBER: DIGIT+
+
+lowercase_word: LCASE_LETTER (LCASE_LETTER | UNDERSCORE | NUMBER)*
+single_quoted_word: /'[^\n]*'/
+
+valid_start: declaration (declaration)*
+
+declaration: language "(" name "," role "," ("(" formula ")" | formula) ")" "."?
+
+language: "tff" -> tff
+    | "thf" -> thf
+    | "fof" -> fof
+    | "cnf" -> cnf
+
+name: lowercase_word | single_quoted_word
+
+role: "axiom" -> axiom
+    | "conjecture" -> conjecture
+
+formula: fof_f
+
+fof_f: "(" fof_f ")"
+    | predicate
+    | fof_equality
+    | fof_inequality
+    | fof_not_f
+    | fof_and_f
+    | fof_or_f
+    | fof_implies_f
+    | fof_implies_backward_f
+    | fof_equivalent_f
+    | fof_all_f
+    | fof_exists_f
+
+fof_equality: fof_f "=" fof_f | term "=" term
+fof_inequality: fof_f "!=" fof_f | term "!=" term
+fof_not_f: "~" fof_f
+fof_and_f: fof_f "&" fof_f ("&" fof_f)*
+fof_or_f: fof_f "|" fof_f ("|" fof_f)*
+fof_implies_f: fof_f "=>" fof_f
+fof_implies_backward_f: fof_f "<=" fof_f
+fof_equivalent_f: fof_f "<=>" fof_f
+fof_all_f: "!" "[" (variable | literal) ("," (variable | literal))* "]" COLON fof_f
+fof_exists_f: "?" "[" (variable | literal) ("," (variable | literal))* "]" COLON fof_f
+
+predicate: predicate_name "(" term ("," term)* ")"
+predicate_name: lowercase_word
+
+novar_predicate: lowercase_word
+
+term: variable
+    | literal
+    | fun_appl
+
+variable: UCASE_LETTER (LCASE_LETTER | UCASE_LETTER | NUMBER | UNDERSCORE)*
+literal: lowercase_word
+
+fun_appl: fun_name "(" term ("," term)* ")"
+fun_name: lowercase_word
+
